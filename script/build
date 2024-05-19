@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+
+EXT="$@"
+docker build . -t "yettoapp/$EXT:latest" -f "Dockerfile.$EXT"
