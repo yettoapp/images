@@ -1,0 +1,83 @@
+# repeated below, because Docker
+ARG PG_VERSION_MAJOR=16
+ARG DEBIAN_VERSION="bookworm"
+
+###############################################
+# First Stage: Builder
+###############################################
+
+FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION} as builder
+
+# repeated above, because Docker
+ARG PG_VERSION_MAJOR=16
+ARG DEBIAN_VERSION="bookworm"
+
+ARG RUST_VERSION=1.78.0
+ARG PGRX_VERSION=0.11.2
+ARG PGX_ULID_VERSION=0.1.4
+
+# Declare buildtime environment variables
+ENV PG_VERSION_MAJOR=${PG_VERSION_MAJOR} \
+    DEBIAN_VERSION=${DEBIAN_VERSION} \
+    RUST_VERSION=${RUST_VERSION} \
+    PGRX_VERSION=${PGRX_VERSION} \
+    PGX_ULID_VERSION=${PGX_ULID_VERSION}
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    ca-certificates \
+    build-essential \
+    gnupg \
+    curl \
+    git \
+    make \
+    gcc \
+    clang \
+    pkg-config \
+    postgresql-server-dev-all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && /root/.cargo/bin/rustup default "${RUST_VERSION}"
+
+# Install pgrx
+RUN $HOME/.cargo/bin/cargo install --locked --version "${PGRX_VERSION}" cargo-pgrx
+RUN $HOME/.cargo/bin/cargo pgrx init --pg${PG_VERSION_MAJOR} $(which pg_config)
+
+######################
+# pgx_ulid
+######################
+
+FROM builder as builder-pgx_ulid
+
+# Build the extension
+WORKDIR /tmp
+RUN git clone --branch v${PGX_ULID_VERSION} https://github.com/pksunkara/pgx_ulid.git
+WORKDIR /tmp/pgx_ulid
+RUN $HOME/.cargo/bin/cargo pgrx package --pg-config "/usr/lib/postgresql/${PG_VERSION_MAJOR}/bin/pg_config"
+
+###############################################
+# Second Stage: PostgreSQL
+###############################################
+
+FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION}
+
+ARG PG_VERSION_MAJOR
+
+COPY --from=builder-pgx_ulid /tmp/pgx_ulid/target/release/ulid-pg${PG_VERSION_MAJOR}/usr/lib/postgresql/${PG_VERSION_MAJOR}/lib/* /usr/lib/postgresql/${PG_VERSION_MAJOR}/lib/
+COPY --from=builder-pgx_ulid /tmp/pgx_ulid/target/release/ulid-pg${PG_VERSION_MAJOR}/usr/share/postgresql/${PG_VERSION_MAJOR}/extension/* /usr/share/postgresql/${PG_VERSION_MAJOR}/extension
+
+# Configure shared_preload_libraries
+ENV POSTGRESQL_SHARED_PRELOAD_LIBRARIES="ulid"
+
+USER postgres
+
+# Variables needed at runtime to configure postgres and run the initdb scripts
+ENV POSTGRES_USER=billy
+
+# Note: This is overriden by passing the POSTGRESQL_PASSWORD environment
+# variable via `docker-compose` or `docker run -e POSTGRESQL_PASSWORD`. All production usage
+# uses a unique, secure password and does not rely on the default settings.
+ENV POSTGRES_PASSWORD=marxvanzetti
