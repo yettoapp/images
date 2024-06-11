@@ -25,25 +25,24 @@ ENV PG_VERSION_MAJOR=${PG_VERSION_MAJOR} \
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    ca-certificates \
-    build-essential \
-    gnupg \
-    curl \
-    git \
-    make \
-    gcc \
-    clang \
     pkg-config \
-    postgresql-server-dev-all \
+    cmake \
+    ca-certificates \
+    git \
+    build-essential \
+    libpq-dev \
+    postgresql-server-dev-${PG_VERSION_MAJOR} \
+    curl \
+    libreadline6-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    && /root/.cargo/bin/rustup default "${RUST_VERSION}"
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --no-modify-path --profile minimal --default-toolchain ${RUST_VERSION}
 
 # Install pgrx
-RUN $HOME/.cargo/bin/cargo install --locked --version "${PGRX_VERSION}" cargo-pgrx
+RUN $HOME/.cargo/bin/cargo install cargo-pgrx --version "${PGRX_VERSION}" --locked
 RUN $HOME/.cargo/bin/cargo pgrx init --pg${PG_VERSION_MAJOR} $(which pg_config)
 
 ######################
