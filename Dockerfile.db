@@ -69,7 +69,8 @@ COPY --from=builder-pgx_ulid /tmp/pgx_ulid/target/release/ulid-pg${PG_VERSION_MA
 COPY --from=builder-pgx_ulid /tmp/pgx_ulid/target/release/ulid-pg${PG_VERSION_MAJOR}/usr/share/postgresql/${PG_VERSION_MAJOR}/extension/* /usr/share/postgresql/${PG_VERSION_MAJOR}/extension
 
 # Configure shared_preload_libraries
-RUN echo "ALTER SYSTEM SET shared_preload_libraries = 'ulid';" > /docker-entrypoint-initdb.d/01-init.sql
+RUN echo 'ALTER SYSTEM SET shared_preload_libraries = 'ulid';\n\
+    CREATE EXTENSION IF NOT EXISTS ulid;\n' > /docker-entrypoint-initdb.d/01-init.sql
 
 USER postgres
 
