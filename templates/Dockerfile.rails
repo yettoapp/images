@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.3.0
+ARG RUBY_VERSION=3.3.4
 # Node version to use in base image
 ARG NODE_VERSION=20.10.0
 
@@ -26,7 +26,7 @@ ARG GID="666"
 ARG RAILS_ENV
 # Set environment for Ruby on Rails
 ENV RAILS_ENV=${RAILS_ENV:-development}
-# Use environment for Node; can (and does_ change in production)
+# Set environment for Node
 ENV NODE_ENV=${RAILS_ENV:-development}
 
 ARG GIT_SHA
@@ -38,19 +38,7 @@ ENV TAILSCALE_VERSION=1.54.0
 # version of AWS CLI to install
 ENV AWSCLI_VERSION=2.14.3
 
-# version of OpenTelemetry Collector to install
-ENV OTEL_COLLECTOR_VERSION=0.91.0
-# OTEL specific env vars, for both the app and the collector
-ARG HONEYCOMB_API_KEY
-ENV HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY}
-
-# establish the environment for OTEL
-ENV OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
-ENV OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=${HONEYCOMB_API_KEY}"
-ENV OTEL_SERVICE_NAME="yetto-${RAILS_ENV}"
-
-ARG FLY_METRICS_TOKEN
-ENV FLY_METRICS_TOKEN=${FLY_METRICS_TOKEN}
+# {{ .ADDITIONAL_ENVIRONMENT_VARIABLES }}
 
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
@@ -190,14 +178,8 @@ ARG TAILSCALE_VERSION
 RUN curl -L -o "tailscale_${TAILSCALE_VERSION}_amd64.tgz" https://pkgs.tailscale.com/stable/tailscale_${TAILSCALE_VERSION}_amd64.tgz && \
     tar xzf "tailscale_${TAILSCALE_VERSION}_amd64.tgz" --strip-components=1
 
-# Install OpenTelemetry Collector
-FROM prebuild as opentelemetry
 
-ARG OTEL_COLLECTOR_VERSION
-RUN curl -L -o "otelcol.tar.gz" https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v${OTEL_COLLECTOR_VERSION}/otelcol-contrib_${OTEL_COLLECTOR_VERSION}_linux_amd64.tar.gz && \
-    mkdir otelcol-contrib && \
-    tar xfz "otelcol.tar.gz" -C otelcol-contrib && \
-    chmod +x otelcol-contrib
+# {{ .ADDITIONAL_STAGES }}
 
 # Create temporary assets build layer from build layer
 FROM prebuild as assets
@@ -262,7 +244,7 @@ COPY --from=tailscale /yetto/tailscaled /yetto/tailscaled
 COPY --from=tailscale /yetto/tailscale /yetto/tailscale
 RUN mkdir -p /var/run/tailscale /var/cache/tailscale /yetto/.cache /yetto/.local
 
-COPY --from=opentelemetry /yetto/otelcol-contrib /usr/local/bin/
+# {{ .ADDITIONAL_COPY }}
 
 RUN \
     # Set Yetto user as owner of log folder
@@ -281,6 +263,8 @@ RUN \
     # Precompile bootsnap code for faster Rails startup
     bundle exec bootsnap precompile --gemfile app/ lib/;
 
+# {{ .ADDITIONAL_POST_PROCESSING }}
+
 USER yetto
 
 # Entrypoint sets up the container.
@@ -288,6 +272,8 @@ ENTRYPOINT ["/yetto/bin/docker-entrypoint"]
 
 # Expose default Puma ports
 EXPOSE 3000
+
+# {{ .ADDITIONAL_PORTS }}
 
 # Start the server
 CMD ["./bin/rails", "server"]
