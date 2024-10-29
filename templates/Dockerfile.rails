@@ -228,7 +228,7 @@ RUN \
     --mount=type=cache,id=npm-cache-${RAILS_ENV},target=/root/.npm,sharing=locked \
     apt-get update -qq && \
     # Install packages needed for deployment
-    apt-get install --no-install-recommends -y postgresql-client sudo cron vim \
+    apt-get install --no-install-recommends -y postgresql-client sudo vim \
     ;
 
 # Copy Yetto sources into final layer
@@ -254,8 +254,6 @@ RUN \
     chown -R yetto:yetto /yetto/tmp;
 
 RUN \
-    # Write latest crontab
-    bundle exec whenever --update-crontab && \
     # Pass build version
     echo $GIT_SHA > /yetto/GIT_SHA
 
