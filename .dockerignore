@@ -1,0 +1,7 @@
+# this prevents anything from this repo being added
+# to the docker image during `ONBUILD COPY . /app`--
+# that's supposed to be reserved for the final app itself
+*
+
+!**/Dockerfile
+!**/*.yml

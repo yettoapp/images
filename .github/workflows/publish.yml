@@ -15,12 +15,11 @@ permissions:
   attestations: write
 
 jobs:
-  prepare-build:
-    if: ${{ github.event_name == 'push' }}
+  prepare:
     runs-on: ubuntu-latest
 
     outputs:
-      build_matrix: ${{ steps.check-success.outputs.changed_dockerfiles }}
+      matrix: ${{ steps.changed-dockerfiles.outputs.all_changed_files }}
 
     steps:
       - name: Checkout code
@@ -32,49 +31,30 @@ jobs:
         with:
           files: |
             **/Dockerfile
+          matrix: true
 
-      - name: Modify any changed Dockerfiles
-        id: check-success
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-dockerfiles.outputs.all_changed_files }}
-        shell: python
-        run: |
-          import os
-          import json
+      - name: List all changed files
+        run: echo '${{ steps.changed-dockerfiles.outputs.all_changed_files }}'
 
-          all_changed_files = os.getenv('ALL_CHANGED_FILES', '[]')
-
-          if not all_changed_files:
-              # If ALL_CHANGED_FILES is empty, set an empty JSON array to GITHUB_OUTPUT
-              output = {"changed_dockerfiles": []}
-          else:
-              # Convert ALL_CHANGED_FILES to a list
-              files = all_changed_files.split('\n')
-              # Iterate over each item in the list and replace / with -
-              changed_dockerfiles = []
-              for file in files:
-                  changed_dockerfiles.append(file)
-              # Create the output dictionary
-              output = {"changed_dockerfiles": changed_dockerfiles}
-
-          # Save the JSON array to GITHUB_OUTPUT
-          with open(os.getenv('GITHUB_OUTPUT'), 'a') as f:
-              f.write(f"changed_dockerfiles={json.dumps(output['changed_dockerfiles'])}\n")
   run-matrix:
-    needs: prepare-build
+    needs: prepare
+    if: ${{ needs.prepare.outputs.matrix != '[]' }}
     runs-on: ubuntu-latest
-    if: ${{ always() && needs.prepare-build.outputs.build_matrix != '[]' }}
     strategy:
-      matrix: ${{ fromJson(needs.prepare-build.outputs.build_matrix) }}
+      matrix:
+        dockerfile: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+      max-parallel: 4
+      fail-fast: false
     steps:
       - name: Set image_name variable
         run: |
-          image_name="${{ matrix.changed_dockerfiles }}"
+          image_name="${{ matrix.dockerfile }}"
           image_name="${image_name//\//-}"
-          image_name="${image_name%-Dockerfile}"
+          image_name="yettoapp/${image_name%-Dockerfile}"
           echo "image_name=$image_name" >> $GITHUB_ENV
 
-      - run: echo ${{env.image_name}}
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -90,7 +70,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/yettoapp/${{ env.image_name }}
+          images: ${{ env.REGISTRY }}/${{ env.image_name }}
           tags: |
             type=raw,value={{branch}}
 
