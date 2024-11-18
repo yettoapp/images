@@ -1,5 +1,5 @@
 # repeated below, because Docker
-ARG PG_VERSION_MAJOR=17
+ARG PG_VERSION_MAJOR=16
 ARG DEBIAN_VERSION="bookworm"
 
 ###############################################
@@ -9,12 +9,12 @@ ARG DEBIAN_VERSION="bookworm"
 FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION} AS builder
 
 # repeated above, because Docker
-ARG PG_VERSION_MAJOR=17
+ARG PG_VERSION_MAJOR=16
 ARG DEBIAN_VERSION="bookworm"
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG RUST_VERSION=1.78.0
-ARG PGRX_VERSION=0.12.5
+ARG PGRX_VERSION=0.11.2
 ARG PGX_ULID_VERSION=0.1.5
 ARG PGVECTOR_VERSION=0.7.2
 
