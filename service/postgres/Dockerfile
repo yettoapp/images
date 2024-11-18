@@ -46,9 +46,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
 RUN $HOME/.cargo/bin/cargo install cargo-pgrx --version "${PGRX_VERSION}" --locked
 RUN $HOME/.cargo/bin/cargo pgrx init --pg${PG_VERSION_MAJOR} $(which pg_config)
 
-######################
+###################
 # pgx_ulid
-######################
+###################
 
 FROM builder AS builder-pgx_ulid
 
@@ -58,9 +58,9 @@ RUN git clone --branch v${PGX_ULID_VERSION} https://github.com/pksunkara/pgx_uli
 WORKDIR /tmp/pgx_ulid
 RUN $HOME/.cargo/bin/cargo pgrx package --pg-config "/usr/lib/postgresql/${PG_VERSION_MAJOR}/bin/pg_config"
 
-######################
+###################
 # pgvector
-######################
+###################
 
 FROM builder AS builder-pgvector
 
