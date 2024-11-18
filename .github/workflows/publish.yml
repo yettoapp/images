@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: Get changed Dockerfiles
         id: changed-dockerfiles
@@ -34,27 +32,33 @@ jobs:
         with:
           files_yaml: |
             dockerfiles:
-              - 'Dockerfile'
+              - '**/Dockerfile*'
 
       - name: Modify any changed Dockerfiles
         id: check-success
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-dockerfiles.outputs.all_changed_files }}
         run: |
-          # Convert ALL_CHANGED_FILES to an array
-          IFS=$'\n' read -r -d '' -a files <<< "$ALL_CHANGED_FILES"
-          # Iterate over each item in the array and replace / with -
-          json_array=$(jq -n '[]')
-          for file in "${files[@]}"; do
-            image_name="${file//\//-}"
-            json_array=$(echo "$json_array" | jq --arg dockerfile "$file" --arg image_name "$image_name" '. += [{"dockerfile": $dockerfile, "image_name": $image_name}]')
-          done
-          # Save the JSON array to GITHUB_OUTPUT
-          echo "changed_dockerfiles=$json_array" >> $GITHUB_OUTPUT
+          if [ -z "$ALL_CHANGED_FILES" ]; then
+            # If ALL_CHANGED_FILES is empty, set an empty JSON array to GITHUB_OUTPUT
+            echo "changed_dockerfiles=$(jq -n '[]')" >> $GITHUB_OUTPUT
+          else
+            # Convert ALL_CHANGED_FILES to an array
+            IFS=$'\n' read -r -d '' -a files <<< "$ALL_CHANGED_FILES"
+            # Iterate over each item in the array and replace / with -
+            json_array=$(jq -n '[]')
+            for file in "${files[@]}"; do
+              image_name="${file//\//-}"
+              json_array=$(echo "$json_array" | jq --arg dockerfile "$file" --arg image_name "$image_name" '. += [{"dockerfile": $dockerfile, "image_name": $image_name}]')
+            done
+            # Save the JSON array to GITHUB_OUTPUT
+            echo "changed_dockerfiles=$json_array" >> $GITHUB_OUTPUT
+          fi
 
   run-matrix:
     needs: prepare-builds
     runs-on: ubuntu-latest
+    if: ${{ fromJson(needs.prepare-builds.outputs.build_matrix).length > 0 }}
     strategy:
       matrix: ${{ fromJson(needs.prepare-builds.outputs.build_matrix) }}
     steps:
