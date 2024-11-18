@@ -2,9 +2,9 @@
 ARG PG_VERSION_MAJOR=16
 ARG DEBIAN_VERSION="bookworm"
 
-###############################################
+############################################
 # First Stage: Builder
-###############################################
+############################################
 
 FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION} AS builder
 
