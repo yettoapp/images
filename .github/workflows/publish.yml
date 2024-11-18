@@ -28,7 +28,7 @@ jobs:
 
       - name: Get changed Dockerfiles
         id: changed-dockerfiles
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v45
         with:
           files: |
             **/Dockerfile
@@ -91,7 +91,7 @@ jobs:
 
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.dockerfile }}
