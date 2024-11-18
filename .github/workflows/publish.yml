@@ -15,7 +15,7 @@ permissions:
   attestations: write
 
 jobs:
-  prepare-builds:
+  prepare-build:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
 
@@ -30,37 +30,44 @@ jobs:
         id: changed-dockerfiles
         uses: tj-actions/changed-files@v44
         with:
-          files_yaml: |
-            dockerfiles:
-              - '**/Dockerfile*'
+          files: |
+            **/Dockerfile
 
       - name: Modify any changed Dockerfiles
         id: check-success
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-dockerfiles.outputs.all_changed_files }}
+        shell: python
         run: |
-          if [ -z "$ALL_CHANGED_FILES" ]; then
-            # If ALL_CHANGED_FILES is empty, set an empty JSON array to GITHUB_OUTPUT
-            echo "changed_dockerfiles=$(jq -n '[]')" >> $GITHUB_OUTPUT
-          else
-            # Convert ALL_CHANGED_FILES to an array
-            IFS=$'\n' read -r -d '' -a files <<< "$ALL_CHANGED_FILES"
-            # Iterate over each item in the array and replace / with -
-            json_array=$(jq -n '[]')
-            for file in "${files[@]}"; do
-              image_name="${file//\//-}"
-              json_array=$(echo "$json_array" | jq --arg dockerfile "$file" --arg image_name "$image_name" '. += [{"dockerfile": $dockerfile, "image_name": $image_name}]')
-            done
-            # Save the JSON array to GITHUB_OUTPUT
-            echo "changed_dockerfiles=$json_array" >> $GITHUB_OUTPUT
-          fi
+          import os
+          import json
 
+          all_changed_files = os.getenv('ALL_CHANGED_FILES', '[]')
+
+          if not all_changed_files:
+              # If ALL_CHANGED_FILES is empty, set an empty JSON array to GITHUB_OUTPUT
+              output = {"changed_dockerfiles": []}
+          else:
+              # Convert ALL_CHANGED_FILES to a list
+              files = all_changed_files.split('\n')
+              # Iterate over each item in the list and replace / with -
+              changed_dockerfiles = []
+              for file in files:
+                  # Remove the trailing '-Dockerfile' suffix
+                  image_name = file.replace('/', '-')[:-11]
+                  changed_dockerfiles.append({"dockerfile": file, "image_name": image_name})
+              # Create the output dictionary
+              output = {"changed_dockerfiles": changed_dockerfiles}
+
+          # Save the JSON array to GITHUB_OUTPUT
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as f:
+              f.write(f"changed_dockerfiles={json.dumps(output['changed_dockerfiles'])}\n")
   run-matrix:
-    needs: prepare-builds
+    needs: prepare-build
     runs-on: ubuntu-latest
-    if: ${{ fromJson(needs.prepare-builds.outputs.build_matrix).length > 0 }}
+    if: ${{ always() && needs.prepare-build.outputs.build_matrix != '[]' }}
     strategy:
-      matrix: ${{ fromJson(needs.prepare-builds.outputs.build_matrix) }}
+      matrix: ${{ fromJson(needs.prepare-build.outputs.build_matrix) }}
     steps:
       - run: echo ${{matrix.image_name}}
 
