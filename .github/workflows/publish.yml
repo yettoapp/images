@@ -53,9 +53,7 @@ jobs:
               # Iterate over each item in the list and replace / with -
               changed_dockerfiles = []
               for file in files:
-                  # Remove the trailing '-Dockerfile' suffix
-                  image_name = file.replace('/', '-')[:-11]
-                  changed_dockerfiles.append({"dockerfile": file, "image_name": image_name})
+                  changed_dockerfiles.append(file)
               # Create the output dictionary
               output = {"changed_dockerfiles": changed_dockerfiles}
 
@@ -69,7 +67,14 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.prepare-build.outputs.build_matrix) }}
     steps:
-      - run: echo ${{matrix.image_name}}
+      - name: Set image_name variable
+        run: |
+          image_name="${{ matrix.changed_dockerfiles }}"
+          image_name="${image_name//\//-}"
+          image_name="${image_name%-Dockerfile}"
+          echo "image_name=$image_name" >> $GITHUB_ENV
+
+      - run: echo ${{env.image_name}}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -85,7 +90,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/yettoapp/${{ matrix.image_name }}
+          images: ${{ env.REGISTRY }}/yettoapp/${{ env.image_name }}
           tags: |
             type=raw,value={{branch}}
 
@@ -104,6 +109,6 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ matrix.image_name }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.image_name }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
