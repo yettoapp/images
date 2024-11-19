@@ -77,11 +77,8 @@ RUN \
 
 # Copy built apps
 COPY --from=litefs /usr/local/bin/litefs /usr/local/bin/litefs
-COPY litefs.yml /etc/litefs.yml
-RUN mkdir -p /data/litefs
-
-RUN mkdir /data/litefs<% end %> && \
-    chown -R <%= user %> <%= Dir[*%w(db log storage tmp)].join(" ") %> /data<% if using_litefs? %> /litefs<% end %>
+COPY --link litefs.yml /etc/litefs.yml
+RUN mkdir -p /data
 
 COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin
 COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin
