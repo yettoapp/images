@@ -60,6 +60,7 @@ RUN \
     apt-get install -y --no-install-recommends  \
     # Common dependencies/tools
     vim \
+    sudo \
     # SQL dependencies
     ca-certificates \
     fuse3 \
@@ -88,14 +89,19 @@ RUN mkdir -p /home/app/.config/op && \
     chown -R "${UID}":"${GID}" /home/app/.config/op && \
     chmod 700 /home/app/.config/op
 
+# Copy app with gems from former build stage
+ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
+ONBUILD COPY --from=base --chown=app:app /app /app
+
 ONBUILD RUN \
     # Creates app user/group and sets home directory
     groupadd --gid "${GID}" --system app; \
     useradd --uid "${UID}" --gid app --no-create-home --system app;
 
-# Copy app with gems from former build stage
-ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
-ONBUILD COPY --from=base --chown=app:app /app /app
+# Authorize app user to launch litefs
+COPY <<-"EOF" /etc/sudoers.d/app
+app ALL=(root) /usr/local/bin/litefs
+EOF
 
 # Entrypoint sets up the container.
 ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
@@ -103,3 +109,4 @@ ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
 # Expose default Puma ports
 EXPOSE 3000
 
+VOLUME /data
