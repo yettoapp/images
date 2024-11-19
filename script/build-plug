@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+docker build . -t "yettoapp/bin-tailscale:main" -f "bin/tailscale/Dockerfile" "$@"
+docker build . -t "yettoapp/bin-op:main" -f "bin/op/Dockerfile" "$@"
+
+docker build . -t "yettoapp/base-rails:main" -f "base/rails/Dockerfile" "$@"
+
+docker build . -t "yettoapp/app-plug:main" -f "app/plug/Dockerfile" "$@"
