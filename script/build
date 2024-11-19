@@ -2,6 +2,7 @@
 
 set -e
 
+FILE="$1/Dockerfile"
 NAME="${1//\//-}"
 LABEL="yettoapp/$NAME"
 TAG="main"
