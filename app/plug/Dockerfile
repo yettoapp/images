@@ -9,8 +9,8 @@ ARG DEBIAN_VERSION="bookworm"
 # version of LiteFS to install
 ARG LITEFS_VERSION=0.5
 
-FROM yettoapp/bin-tailscale:main AS tailscale
-FROM yettoapp/bin-op:main AS op
+FROM ghcr.io/yettoapp/bin-tailscale:main AS tailscale
+FROM ghcr.io/yettoapp/bin-op:main AS op
 
 FROM flyio/litefs:${LITEFS_VERSION} AS litefs
 
