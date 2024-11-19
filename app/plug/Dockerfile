@@ -95,8 +95,10 @@ ONBUILD COPY --from=base --chown=app:app /app /app
 
 ONBUILD RUN \
     # Creates app user/group and sets home directory
-    groupadd --gid "${GID}" --system app; \
-    useradd --uid "${UID}" --gid app --no-create-home --system app;
+    groupadd --system --gid "${GID}" app && \
+    useradd app --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash && \
+    sed -i 's/env_reset/env_keep="*"/' /etc/sudoers && \
+    chown -R "${UID}":"${GID}" db log tmp /data
 
 # Authorize app user to launch litefs
 COPY <<-"EOF" /etc/sudoers.d/app
