@@ -48,9 +48,9 @@ jobs:
     steps:
       - name: Set image_name variable
         run: |
-          image_name="${{ matrix.dockerfile }}"
-          image_name="${image_name//\//-}"
-          image_name="yettoapp/${image_name%-Dockerfile}"
+          dir_name=$(dirname "${{ matrix.dockerfile }}")
+          echo "dir_name=$dir_name" >> $GITHUB_ENV
+          image_name="yettoapp/${dir_name//\//-}"
           echo "image_name=$image_name" >> $GITHUB_ENV
 
       - name: Checkout code
@@ -78,7 +78,7 @@ jobs:
         id: push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ env.dir_name }}
           file: ${{ matrix.dockerfile }}
           push: true
           cache-from: type=gha
