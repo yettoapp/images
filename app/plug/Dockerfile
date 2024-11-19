@@ -14,7 +14,6 @@ FROM ghcr.io/yettoapp/bin-op:main AS op
 
 FROM flyio/litefs:${LITEFS_VERSION} AS litefs
 
-
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-${DEBIAN_VERSION}
 
