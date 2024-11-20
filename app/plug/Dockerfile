@@ -86,7 +86,8 @@ RUN mkdir -p /var/run/tailscale /var/cache/tailscale /app/.cache /app/.local
 
 COPY --from=op /usr/local/bin/op /usr/local/bin/op
 ENV OP_CONFIG_DIR="/app/.config/op"
-RUN mkdir -p /app/.config/op
+RUN mkdir -p /app/.config/op && \
+    chmod 700 /app/.config/op
 
 # Copy app with gems from former build stage
 ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
