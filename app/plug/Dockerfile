@@ -86,8 +86,7 @@ RUN mkdir -p /var/run/tailscale /var/cache/tailscale /app/.cache /app/.local
 
 COPY --from=op /usr/local/bin/op /usr/local/bin/op
 ENV OP_CONFIG_DIR="/app/.config/op"
-RUN mkdir -p /app/.config/op && \
-    chmod 700 /app/.config/op
+RUN mkdir -p /app/.config/op
 
 # Copy app with gems from former build stage
 ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
@@ -100,7 +99,7 @@ ONBUILD RUN \
     chown -R "${UID}":"${GID}" db log tmp /data
 
 # Authorize app user to launch litefs
-RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs" > /etc/sudoers.d/app
+RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs, /usr/local/bin/op" > /etc/sudoers.d/app
 
 # Entrypoint sets up the container.
 ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
