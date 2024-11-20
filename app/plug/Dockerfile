@@ -101,9 +101,7 @@ ONBUILD RUN \
     chown -R "${UID}":"${GID}" db log tmp /data
 
 # Authorize app user to launch litefs
-COPY <<-"EOF" /etc/sudoers.d/app
-app ALL=(root) /usr/local/bin/litefs
-EOF
+RUN echo "app ALL=(root) NOPASSWD: /usr/local/bin/litefs" > /etc/sudoers.d/app
 
 # Entrypoint sets up the container.
 ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
