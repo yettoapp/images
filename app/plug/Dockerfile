@@ -85,7 +85,9 @@ COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin
 RUN mkdir -p /var/run/tailscale /var/cache/tailscale /app/.cache /app/.local
 
 COPY --from=op /usr/local/bin/op /usr/local/bin/op
-RUN mkdir -p /home/app/.config/op
+ENV OP_CONFIG_DIR="/app/.config/op"
+RUN mkdir -p /app/.config/op && \
+    chmod 700 /app/.config/op
 
 # Copy app with gems from former build stage
 ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
@@ -95,9 +97,7 @@ ONBUILD RUN \
     # Creates app user/group and sets home directory
     groupadd --system --gid "${GID}" app && \
     useradd app --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash && \
-    chown -R "${UID}":"${GID}" db log tmp /data && \
-    chown -R "${UID}":"${GID}" /home/app/.config/op && \
-    chmod 700 /home/app/.config/op
+    chown -R "${UID}":"${GID}" db log tmp /data
 
 # Authorize app user to launch litefs
 RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs" > /etc/sudoers.d/app
