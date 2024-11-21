@@ -17,12 +17,12 @@ FROM flyio/litefs:${LITEFS_VERSION} AS litefs
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-${DEBIAN_VERSION}
 
-ARG GIT_SHA
-ENV GIT_SHA=$GIT_SHA
+ONBUILD ARG GIT_SHA
+ONBUILD ENV GIT_SHA=$GIT_SHA
 
-ARG RAILS_ENV
 # Set environment for Ruby on Rails
-ENV RAILS_ENV=${RAILS_ENV:-development}
+ONBUILD ARG RAILS_ENV
+ONBUILD ENV RAILS_ENV=${RAILS_ENV:-development}
 
 # Linux UID (user id) for the app user
 ENV UID="1666"
