@@ -22,7 +22,7 @@ ENV GIT_SHA=$GIT_SHA
 
 ARG RAILS_ENV
 # Set environment for Ruby on Rails
-ENV RAILS_ENV=${RAILS_ENV:-production}
+ENV RAILS_ENV=${RAILS_ENV:-development}
 
 # Linux UID (user id) for the app user
 ENV UID="1666"
@@ -89,18 +89,18 @@ ENV OP_CONFIG_DIR="/app/.config/op"
 RUN mkdir -p /app/.config/op && \
     chmod 700 /app/.config/op
 
-# Copy app with gems from former build stage
-ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
-ONBUILD COPY --from=base --chown=app:app /app /app
-
 ONBUILD RUN \
     # Creates app user/group and sets home directory
     groupadd --system --gid "${GID}" app && \
     useradd app --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash && \
     chown -R "${UID}":"${GID}" db log tmp /data
 
-# Authorize app user to launch litefs
+# Authorize app user to launch binaries
 RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs, /usr/local/bin/op" > /etc/sudoers.d/app
+
+# Copy app with gems from former build stage
+ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
+ONBUILD COPY --from=base --chown=app:app /app /app
 
 # Entrypoint sets up the container.
 ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
