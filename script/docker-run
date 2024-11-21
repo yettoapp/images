@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# This script will build a production Docker image as closely
+# as it resembles on CI.
+
+set -e
+
+NAME="${1//\//-}"
+LABEL="yettoapp/$NAME"
+docker run -it "$LABEL:main" bash
