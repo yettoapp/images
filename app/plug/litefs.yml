@@ -54,10 +54,10 @@ http:
 # for applications that use a single SQLite database.
 proxy:
   # Specifies the bind address of the proxy server.
-  addr: ":3000"
+  addr: ":3001"
 
   # The hostport of the target application.
-  target: "localhost:3001"
+  target: "localhost:3000"
 
   # The name of the database used for TXID tracking.
   db: "production.sqlite3"
