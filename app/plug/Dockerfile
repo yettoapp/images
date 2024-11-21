@@ -93,7 +93,7 @@ ONBUILD RUN \
     # Creates app user/group and sets home directory
     groupadd --system --gid "${GID}" app && \
     useradd app --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash && \
-    chown -R "${UID}":"${GID}" db log tmp /data
+    chown -R "${UID}":"${GID}" /data
 
 # Authorize app user to launch binaries
 RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs, /usr/local/bin/op" > /etc/sudoers.d/app
