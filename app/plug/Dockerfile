@@ -89,18 +89,18 @@ ENV OP_CONFIG_DIR="/app/.config/op"
 RUN mkdir -p /app/.config/op && \
     chmod 700 /app/.config/op
 
-ONBUILD RUN \
-    # Creates app user/group and sets home directory
-    groupadd --system --gid "${GID}" app && \
-    useradd app --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash && \
-    chown -R "${UID}":"${GID}" /data
-
 # Authorize app user to launch binaries
 RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs, /usr/local/bin/op" > /etc/sudoers.d/app
 
 # Copy app with gems from former build stage
 ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
 ONBUILD COPY --from=base --chown=app:app /app /app
+
+ONBUILD RUN \
+    # Creates app user/group and sets home directory
+    groupadd --system --gid "${GID}" app && \
+    useradd app --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash && \
+    chown -R "${UID}":"${GID}" db log tmp /data
 
 # Entrypoint sets up the container.
 ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
