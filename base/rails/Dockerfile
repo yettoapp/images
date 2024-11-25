@@ -51,6 +51,7 @@ RUN \
     DEBIAN_FRONTEND=noninteractive apt-get -yq dist-upgrade && \
     DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends  \
     build-essential \
+    libpq-dev \
     cmake \
     gnupg2 \
     curl \

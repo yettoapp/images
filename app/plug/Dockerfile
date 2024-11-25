@@ -12,8 +12,6 @@ ARG LITEFS_VERSION=0.5
 FROM ghcr.io/yettoapp/bin-tailscale:main AS tailscale
 FROM ghcr.io/yettoapp/bin-op:main AS op
 
-FROM flyio/litefs:${LITEFS_VERSION} AS litefs
-
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-${DEBIAN_VERSION}
 
@@ -62,9 +60,7 @@ RUN \
     vim \
     sudo \
     # SQL dependencies
-    ca-certificates \
-    fuse3 \
-    sqlite3 \
+    libpq-dev \
     # Install jemalloc
     libjemalloc2 \
     patchelf \
@@ -74,10 +70,6 @@ RUN \
     # Discard patchelf after use
     apt-get purge -y patchelf;
 
-
-# Copy built apps
-COPY --from=litefs /usr/local/bin/litefs /usr/local/bin/litefs
-COPY --link litefs.yml /etc/litefs.yml
 RUN mkdir -p /data
 
 COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin
@@ -90,7 +82,7 @@ RUN mkdir -p /app/.config/op && \
     chmod 700 /app/.config/op
 
 # Authorize app user to launch binaries
-RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/litefs, /usr/local/bin/op" > /etc/sudoers.d/app
+RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/op" > /etc/sudoers.d/app
 
 # Copy app with gems from former build stage
 ONBUILD COPY --from=base --chown=app:app /usr/local/bundle/ /usr/local/bundle/
