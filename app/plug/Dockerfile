@@ -22,6 +22,9 @@ ONBUILD ENV GIT_SHA=$GIT_SHA
 ONBUILD ARG RAILS_ENV
 ONBUILD ENV RAILS_ENV=${RAILS_ENV:-development}
 
+# yes, you're in docker
+ENV DOCKER="1"
+
 # Linux UID (user id) for the app user
 ENV UID="1666"
 # Linux GID (group id) for the app user
