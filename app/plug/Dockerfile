@@ -6,9 +6,6 @@ ARG RUBY_VERSION=3.3.4
 # Debian image to use for base images
 ARG DEBIAN_VERSION="bookworm"
 
-# version of LiteFS to install
-ARG LITEFS_VERSION=0.5
-
 FROM ghcr.io/yettoapp/bin-tailscale:main AS tailscale
 FROM ghcr.io/yettoapp/bin-op:main AS op
 
