@@ -17,11 +17,11 @@ FROM docker.io/node:${NODE_VERSION}-${DEBIAN_VERSION}-slim AS node
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-slim-${DEBIAN_VERSION} AS ruby
 
-ARG RAILS_ENV
+ARG APP_ENV
 # Set environment for Ruby on Rails
-ENV RAILS_ENV=${RAILS_ENV:-production}
+ENV RAILS_ENV=${APP_ENV:-production}
 # Set environment for Node
-ENV NODE_ENV=${RAILS_ENV:-production}
+ENV NODE_ENV=${APP_ENV:-production}
 
 # if true, builds the assets and uploads them to S3
 ARG WITH_ASSETS
