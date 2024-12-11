@@ -117,7 +117,7 @@ ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
     set -ex \
     # for postcss, etc
     NODE_ENV=development npm install \
-    RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY bin/rails assets:precompile \
+    RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile \
     rm -fr /app/tmp; \
     fi
 
