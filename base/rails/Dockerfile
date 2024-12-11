@@ -123,10 +123,10 @@ ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
 
 # Upload assets to S3
 ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
-    --mount=type=secret,id=AWS_ACCESS_KEY_ID \
-    --mount=type=secret,id=AWS_SECRET_ACCESS_KEY \
-    aws configure set aws_access_key_id $(cat /run/secrets/AWS_ACCESS_KEY_ID); \
-    aws configure set aws_secret_access_key $(cat /run/secrets/AWS_SECRET_ACCESS_KEY); \
+    --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
+    --mount=type=secret,id=AWS_SECRET_ACCESS_KEY,env=AWS_SECRET_ACCESS_KEY \
+    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID; \
+    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY; \
     aws s3 sync ./public/ s3://$S3_BUCKET_NAME; \
     fi
 
