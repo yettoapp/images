@@ -17,15 +17,18 @@ FROM docker.io/node:${NODE_VERSION}-${DEBIAN_VERSION}-slim AS node
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-slim-${DEBIAN_VERSION} AS ruby
 
-ARG RAILS_ENV
+ARG APP_ENV
 # Set environment for Ruby on Rails
-ENV RAILS_ENV=${RAILS_ENV:-production}
+ENV RAILS_ENV=${APP_ENV:-production}
 # Set environment for Node
-ENV NODE_ENV=${RAILS_ENV:-production}
+ENV NODE_ENV=${APP_ENV:-production}
 
 # if true, builds the assets and uploads them to S3
 ARG WITH_ASSETS
 ENV WITH_ASSETS=${WITH_ASSETS:-}
+
+ARG S3_BUCKET_NAME
+ENV S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
 
 # Set default shell used for running commands
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-c"]
@@ -124,7 +127,7 @@ ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
     --mount=type=secret,id=AWS_SECRET_ACCESS_KEY \
     aws configure set aws_access_key_id $(cat /run/secrets/AWS_ACCESS_KEY_ID); \
     aws configure set aws_secret_access_key $(cat /run/secrets/AWS_SECRET_ACCESS_KEY); \
-    aws s3 sync ./public/ s3://$(cat /run/secrets/S3_BUCKET_NAME); \
+    aws s3 sync ./public/ s3://$S3_BUCKET_NAME; \
     fi
 
 ONBUILD RUN rm -rf node_modules vendor/bundle test

@@ -2,11 +2,13 @@
 
 set -e
 
-FILE="$1/Dockerfile"
-NAME="${1//\//-}"
+DIR=$1
+shift
+FILE="$DIR/Dockerfile"
+NAME="${DIR//\//-}"
 LABEL="yettoapp/$NAME"
 TAG="main"
 echo "Building $LABEL tagged as $TAG ($FILE)"
 
-cd "$1"
-docker build -t "$LABEL:$TAG" .
+cd "$DIR"
+docker build -t "$LABEL:$TAG" "$@" .
