@@ -24,8 +24,8 @@ ENV NODE_ENV=${APP_ENV:-production}
 ONBUILD ARG WITH_ASSETS
 ONBUILD ENV WITH_ASSETS=${WITH_ASSETS:-}
 
-ARG S3_BUCKET_NAME
-ENV S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
+ONBUILD ARG S3_BUCKET_NAME
+ONBUILD ENV S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
 
 # Set default shell used for running commands
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-c"]
