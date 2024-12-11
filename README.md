@@ -9,7 +9,8 @@ The layout for this repository is very specific, and follows certain guidelines.
 ```
 ├── app
 │   └── plug
-│       ├── Dockerfile
+│       └── ruby
+│           └── Dockerfile
 ├── base
 │   └── rails
 │       ├── Dockerfile
