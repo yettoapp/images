@@ -32,9 +32,9 @@ RUN \
 
 ENV LANG=C.UTF-8
 
+ONBUILD ARG APP_ENV
 # Set environment
-ARG APP_ENV
-ENV APP_ENV=${APP_ENV:-development}
+ONBUILD ENV APP_ENV=${APP_ENV:-development}
 
 WORKDIR /app
 ENV DEBIAN_FRONTEND="noninteractive" \
@@ -73,6 +73,9 @@ RUN \
     # Common dependencies/tools
     vim \
     sudo
+
+ONBUILD ARG GIT_SHA
+ONBUILD ENV GIT_SHA=$GIT_SHA
 
 ##########################################
 ### Language specific work starts here ###

@@ -14,11 +14,12 @@ FROM docker.io/node:${NODE_VERSION}-${DEBIAN_VERSION}-slim AS node
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-slim-${DEBIAN_VERSION} AS ruby
 
-ARG APP_ENV
+ONBUILD ARG APP_ENV
+
 # Set environment for Ruby on Rails
-ENV RAILS_ENV=${APP_ENV:-production}
+ONBUILD ENV RAILS_ENV=${APP_ENV:-development}
 # Set environment for Node
-ENV NODE_ENV=${APP_ENV:-production}
+ONBUILD ENV NODE_ENV=${APP_ENV:-development}
 
 # if true, builds the assets and uploads them to S3
 ONBUILD ARG WITH_ASSETS
@@ -37,6 +38,8 @@ RUN \
 # Rails app lives here
 WORKDIR /app
 
+ENV DEBIAN_FRONTEND="noninteractive"
+
 # Common dependencies
 RUN \
     # Using --mount to speed up build with caching, see https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#run---mount
@@ -48,8 +51,8 @@ RUN \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache; \
     # Apt update & upgrade to check for security updates to Debian image
     apt-get update -qq && \
-    DEBIAN_FRONTEND=noninteractive apt-get -yq dist-upgrade && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends  \
+    apt-get -yq dist-upgrade && \
+    apt-get install -yq --no-install-recommends  \
     build-essential \
     libpq-dev \
     cmake \
@@ -113,13 +116,13 @@ ONBUILD COPY . /app
 ONBUILD RUN bundle exec bootsnap precompile app/ lib/ || true
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
-    set -ex \
-    # for postcss, etc
-    NODE_ENV=development npm install \
-    RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile \
-    rm -fr /app/tmp; \
-    fi
+ONBUILD RUN bash -c 'if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
+    set -ex; \
+    # for vite, etc
+    NODE_ENV=development npm install; \
+    PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile; \
+    rm -fr /app/tmp;  \
+    fi'
 
 # Upload assets to S3
 ONBUILD RUN \

@@ -27,9 +27,6 @@ ONBUILD COPY --from=builder --chown=app:app /app /app
 # Entrypoint sets up the container.
 ONBUILD ENTRYPOINT ["/app/bin/docker-entrypoint"]
 
-ONBUILD ARG GIT_SHA
-ONBUILD ENV GIT_SHA=$GIT_SHA
-
 # Expose default Puma ports
 EXPOSE 3000
 
