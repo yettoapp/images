@@ -71,6 +71,7 @@ ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
     curl "https://awscli.amazonaws.com/awscli-exe-${AWSCLI_VERSION}.zip" -o "awscli.zip" && \
     unzip awscli.zip && \
     ./aws/install; \
+    rm awscli.zip; \
     fi
 
 FROM ruby AS builder
@@ -116,11 +117,11 @@ ONBUILD COPY . /app
 ONBUILD RUN bundle exec bootsnap precompile app/ lib/ || true
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-ONBUILD RUN bash -c 'if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
+ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
     set -ex; \
     # for vite, etc
     NODE_ENV=development npm install; \
-    PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile; \
+    RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile; \
     rm -fr /app/tmp;  \
     fi'
 
