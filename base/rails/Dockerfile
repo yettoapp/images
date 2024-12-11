@@ -5,9 +5,6 @@ ARG RUBY_VERSION=3.3.4
 # Node version to use in base image
 ARG NODE_VERSION=22.11.0
 
-# version of AWS CLI to use for asset uploads
-ARG AWSCLI_VERSION=linux-x86_64-2.14.3
-
 # Debian image to use for base images
 ARG DEBIAN_VERSION="bookworm"
 
@@ -62,6 +59,9 @@ RUN \
     less \
     git \
     ;
+
+# version of AWS CLI to use for asset uploads
+ONBUILD ARG AWSCLI_VERSION=linux-x86_64-2.14.3
 
 # Install AWS CLI
 ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
