@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - main
+  registry_package:
 
 env:
   REGISTRY: ghcr.io
@@ -72,6 +73,44 @@ jobs:
         run: |
           echo "dockerfile=${{ inputs.path }}/Dockerfile" >> $GITHUB_ENV
           dir_name=$(dirname "${{ inputs.path }}/Dockerfile")
+          echo "dir_name=$dir_name" >> $GITHUB_ENV
+          image_name="yettoapp/${dir_name//\//-}"
+          echo "image_name=$image_name" >> $GITHUB_ENV
+
+      - uses: yettoapp/images/.github/actions/publish-to-ghcr@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  dependent:
+    if: ${{ github.event_name == 'registry_package' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check publication type
+        run: |
+          if [ "${{ github.event.registry_package.package_type }}" != "container" ]; then
+            echo "This is not a container package"
+            exit 0
+          fi
+
+      - name: Send GitHub Action data to a Slack workflow
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          payload-delimiter: "_"
+          webhook: ${{ secrets.SLACK_INFRA_WEBHOOK_URL }}
+          webhook-type: webhook-trigger
+
+      - name: Set name of dependent image
+        run: |
+          package_name="${{ github.event.registry_package.name }}"
+          dependent = ""
+
+          valid_names=("base-ruby" "base-rails")
+          if [[ " ${valid_names[@]} " =~ " ${package_name} " ]]; then
+            dependent = "app/plug/ruby"
+          fi
+
+          echo "dockerfile=$dependent/Dockerfile" >> $GITHUB_ENV
+          dir_name=$(dirname "$dependent/Dockerfile")
           echo "dir_name=$dir_name" >> $GITHUB_ENV
           image_name="yettoapp/${dir_name//\//-}"
           echo "image_name=$image_name" >> $GITHUB_ENV
