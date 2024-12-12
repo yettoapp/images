@@ -12,7 +12,7 @@ on:
 jobs:
   update:
     name: Update app
-    uses: yettoapp/actions/.github/workflows/updater.yml@updater
+    uses: yettoapp/actions/.github/workflows/updater.yml@main
     with:
       action: ${{ inputs.action }}
       value: ${{ inputs.value }}
