@@ -1,5 +1,5 @@
 # repeated below, because Docker
-ARG PG_VERSION_MAJOR=16
+ARG PG_VERSION_MAJOR=17
 ARG DEBIAN_VERSION="bookworm"
 
 ############################################
@@ -9,18 +9,17 @@ ARG DEBIAN_VERSION="bookworm"
 FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION} AS builder
 
 # repeated above, because Docker
-ARG PG_VERSION_MAJOR=16
+ARG PG_VERSION_MAJOR=17
 ARG DEBIAN_VERSION="bookworm"
-ARG DEBIAN_FRONTEND=noninteractive
 
-ARG RUST_VERSION=1.78.0
-ARG PGRX_VERSION=0.11.2
-ARG PGX_ULID_VERSION=0.1.5
+ARG RUST_VERSION=1.81.0
+ARG PGRX_VERSION=0.12.7
+ARG PGX_ULID_VERSION=0.2.0
 ARG PGVECTOR_VERSION=0.7.2
 
 # Declare buildtime environment variables
-ENV PG_VERSION_MAJOR=${PG_VERSION_MAJOR} \
-    DEBIAN_VERSION=${DEBIAN_VERSION} \
+ENV DEBIAN_VERSION="noninteractive" \
+    PG_VERSION_MAJOR=${PG_VERSION_MAJOR} \
     RUST_VERSION=${RUST_VERSION} \
     PGRX_VERSION=${PGRX_VERSION} \
     PGX_ULID_VERSION=${PGX_ULID_VERSION} \
@@ -52,11 +51,9 @@ RUN $HOME/.cargo/bin/cargo pgrx init --pg${PG_VERSION_MAJOR} $(which pg_config)
 
 FROM builder AS builder-pgx_ulid
 
-# Build the extension
+# Download the extension
 WORKDIR /tmp
-RUN git clone --branch v${PGX_ULID_VERSION} https://github.com/pksunkara/pgx_ulid.git
-WORKDIR /tmp/pgx_ulid
-RUN $HOME/.cargo/bin/cargo pgrx package --pg-config "/usr/lib/postgresql/${PG_VERSION_MAJOR}/bin/pg_config"
+RUN curl -L -o pgx_ulid.deb "https://github.com/pksunkara/pgx_ulid/releases/download/v0.2.0/pgx_ulid-v${PGX_ULID_VERSION}-pg${PG_VERSION_MAJOR}-amd64-linux-gnu.deb"
 
 ###################
 # pgvector
@@ -82,8 +79,9 @@ FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION}
 
 ARG PG_VERSION_MAJOR
 
-COPY --from=builder-pgx_ulid /tmp/pgx_ulid/target/release/ulid-pg${PG_VERSION_MAJOR}/usr/lib/postgresql/${PG_VERSION_MAJOR}/lib/* /usr/lib/postgresql/${PG_VERSION_MAJOR}/lib/
-COPY --from=builder-pgx_ulid /tmp/pgx_ulid/target/release/ulid-pg${PG_VERSION_MAJOR}/usr/share/postgresql/${PG_VERSION_MAJOR}/extension/* /usr/share/postgresql/${PG_VERSION_MAJOR}/extension
+# Copy the compiled pgx_ulid extension from the builder stage
+COPY --from=builder-pgx_ulid /tmp/pgx_ulid.deb /tmp
+RUN dpkg -i /tmp/pgx_ulid.deb && rm /tmp/pgx_ulid.deb
 
 # Copy the compiled pgvector extension from the builder stage
 COPY --from=builder-pgvector /tmp/pgvector*.deb /tmp
@@ -96,7 +94,7 @@ RUN apt-get autoremove -y && \
     rm -rf /tmp
 
 # Configure shared_preload_libraries
-RUN echo 'ALTER SYSTEM SET shared_preload_libraries = 'ulid';\n\
+RUN echo 'ALTER SYSTEM SET shared_preload_libraries = 'pgx_ulid';\n\
     CREATE EXTENSION IF NOT EXISTS ulid;\n' > /docker-entrypoint-initdb.d/01-init.sql
 
 USER postgres
