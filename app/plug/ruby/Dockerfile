@@ -8,6 +8,9 @@ FROM ${REGISTRY}yettoapp/base-ruby:main AS language
 ONBUILD ARG APP_ENV
 ONBUILD ENV RAILS_ENV=${APP_ENV:-development}
 
+ONBUILD ARG GIT_SHA
+ONBUILD ENV GIT_SHA=$GIT_SHA
+
 RUN \
     # Mount Apt cache and lib directories from Docker buildx caches
     --mount=type=cache,id=apt-cache-${RAILS_ENV},target=/var/cache/apt,sharing=locked \
