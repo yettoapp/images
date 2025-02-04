@@ -53,7 +53,7 @@ RUN mkdir -p /app/.config/op && \
     chmod 700 /app/.config/op
 
 # Authorize app user to launch certain binaries
-ONBUILD RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/op" > /etc/sudoers.d/app
+ONBUILD RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/op, /usr/local/bin/tailscaled, /usr/local/bin/tailscale" > /etc/sudoers.d/app
 
 RUN \
     # Creates app user/group and sets home directory
