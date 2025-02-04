@@ -44,14 +44,15 @@ RUN mkdir -p /data
 
 COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin
 COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin
-RUN mkdir -p /var/run/tailscale /var/cache/tailscale /app/.cache /app/.local
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /app/.cache /app/.local /app/.local/share/tailscale/ && \
+    chown -R "${UID}":"${GID}" /var/run/tailscale
 
 COPY --from=op /usr/local/bin/op /usr/local/bin/op
 ENV OP_CONFIG_DIR="/app/.config/op"
 RUN mkdir -p /app/.config/op && \
     chmod 700 /app/.config/op
 
-# Authorize app user to launch binaries
+# Authorize app user to launch certain binaries
 ONBUILD RUN echo "app ALL=(root) NOPASSWD:SETENV: /usr/local/bin/op" > /etc/sudoers.d/app
 
 RUN \
