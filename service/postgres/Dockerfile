@@ -53,7 +53,7 @@ FROM builder AS builder-pgx_ulid
 
 # Download the extension
 WORKDIR /tmp
-RUN curl -L -o pgx_ulid.deb "https://github.com/pksunkara/pgx_ulid/releases/download/v0.2.0/pgx_ulid-v${PGX_ULID_VERSION}-pg${PG_VERSION_MAJOR}-amd64-linux-gnu.deb"
+RUN curl -L -o pgx_ulid.deb "https://github.com/pksunkara/pgx_ulid/releases/download/v${PGX_ULID_VERSION}/pgx_ulid-v${PGX_ULID_VERSION}-pg${PG_VERSION_MAJOR}-amd64-linux-gnu.deb"
 
 ###################
 # pgvector
@@ -78,12 +78,16 @@ RUN curl -L -o pgvector.tar.gz "https://github.com/pgvector/pgvector/archive/ref
 FROM postgres:${PG_VERSION_MAJOR}-${DEBIAN_VERSION}
 
 ARG PG_VERSION_MAJOR
+ARG PGX_ULID_VERSION
 
 # Copy the compiled pgx_ulid extension from the builder stage
 COPY --from=builder-pgx_ulid /tmp/pgx_ulid.deb /tmp
+# unsure why but `PGX_ULID_VERSION` is unavailable, so we'll do it the long way
 RUN dpkg -i /tmp/pgx_ulid.deb && rm /tmp/pgx_ulid.deb && \
     mv /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/ulid.control /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/pgx_ulid.control && \
-    mv /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/ulid--*.sql /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/pgx_ulid--0.2.0.sql
+    for file in /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/ulid--*.sql; do \
+    mv "$file" "/usr/share/postgresql/${PG_VERSION_MAJOR}/extension/pgx_ulid--${file##*--}"; \
+    done
 
 # Copy the compiled pgvector extension from the builder stage
 COPY --from=builder-pgvector /tmp/pgvector*.deb /tmp
