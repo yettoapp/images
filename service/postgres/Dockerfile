@@ -81,7 +81,9 @@ ARG PG_VERSION_MAJOR
 
 # Copy the compiled pgx_ulid extension from the builder stage
 COPY --from=builder-pgx_ulid /tmp/pgx_ulid.deb /tmp
-RUN dpkg -i /tmp/pgx_ulid.deb && rm /tmp/pgx_ulid.deb
+RUN dpkg -i /tmp/pgx_ulid.deb && rm /tmp/pgx_ulid.deb && \
+    mv /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/ulid.control /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/pgx_ulid.control && \
+    mv /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/ulid--*.sql /usr/share/postgresql/${PG_VERSION_MAJOR}/extension/pgx_ulid--0.2.0.sql
 
 # Copy the compiled pgvector extension from the builder stage
 COPY --from=builder-pgvector /tmp/pgvector*.deb /tmp
@@ -94,8 +96,8 @@ RUN apt-get autoremove -y && \
     rm -rf /tmp
 
 # Configure shared_preload_libraries
-RUN echo 'ALTER SYSTEM SET shared_preload_libraries = 'pgx_ulid';\n\
-    CREATE EXTENSION IF NOT EXISTS ulid;\n' > /docker-entrypoint-initdb.d/01-init.sql
+RUN echo "ALTER SYSTEM SET shared_preload_libraries = 'pgx_ulid';\n\
+    CREATE EXTENSION IF NOT EXISTS pgx_ulid;\n" > /docker-entrypoint-initdb.d/01-init.sql
 
 USER postgres
 
