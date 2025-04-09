@@ -41,7 +41,7 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND="noninteractive"
 
 # Common dependencies
-RUN \
+ONBUILD RUN \
     # Using --mount to speed up build with caching, see https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#run---mount
     --mount=type=cache,id=apt-cache-${RAILS_ENV},target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lib-${RAILS_ENV},target=/var/lib/apt,sharing=locked \
@@ -67,7 +67,7 @@ RUN \
 ONBUILD ARG AWSCLI_VERSION=linux-x86_64-2.14.3
 
 # Install AWS CLI
-ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
+ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$S3_BUCKET_NAME" != "" ]]; then \
     curl "https://awscli.amazonaws.com/awscli-exe-${AWSCLI_VERSION}.zip" -o "awscli.zip" && \
     unzip awscli.zip && \
     ./aws/install; \
@@ -129,7 +129,7 @@ ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
 ONBUILD RUN \
     --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
     --mount=type=secret,id=AWS_SECRET_ACCESS_KEY,env=AWS_SECRET_ACCESS_KEY \
-    bash -c 'if [[ "$RAILS_ENV" = "production" && "$WITH_ASSETS" != "" ]]; then \
+    bash -c 'if [[ "$RAILS_ENV" = "production" && "$S3_BUCKET_NAME" != "" ]]; then \
     aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID; \
     aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY; \
     aws s3 sync /app/public/ s3://$S3_BUCKET_NAME; \
