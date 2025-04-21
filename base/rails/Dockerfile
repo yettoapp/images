@@ -41,10 +41,10 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND="noninteractive"
 
 # Common dependencies
-ONBUILD RUN \
+RUN \
     # Using --mount to speed up build with caching, see https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#run---mount
-    --mount=type=cache,id=apt-cache-${RAILS_ENV},target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=apt-lib-${RAILS_ENV},target=/var/lib/apt,sharing=locked \
+    --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lib,target=/var/lib/apt,sharing=locked \
     --mount=type=tmpfs,target=/var/log \
     # Remove automatic apt cache Docker cleanup scripts
     rm -f /etc/apt/apt.conf.d/docker-clean; \
@@ -64,15 +64,14 @@ ONBUILD RUN \
     ;
 
 # version of AWS CLI to use for asset uploads
-ONBUILD ARG AWSCLI_VERSION=linux-x86_64-2.14.3
+ARG AWSCLI_VERSION=linux-x86_64-2.14.3
 
 # Install AWS CLI
-ONBUILD RUN if [[ "$RAILS_ENV" = "production" && "$S3_BUCKET_NAME" != "" ]]; then \
-    curl "https://awscli.amazonaws.com/awscli-exe-${AWSCLI_VERSION}.zip" -o "awscli.zip" && \
+RUN curl "https://awscli.amazonaws.com/awscli-exe-${AWSCLI_VERSION}.zip" -o "awscli.zip" && \
     unzip awscli.zip && \
     ./aws/install; \
-    rm awscli.zip; \
-    fi
+    rm awscli.zip \
+    ;
 
 FROM ruby AS builder
 
