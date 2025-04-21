@@ -64,7 +64,7 @@ RUN \
     ;
 
 # version of AWS CLI to use for asset uploads
-ARG AWSCLI_VERSION=linux-x86_64-2.14.3
+ARG AWSCLI_VERSION=linux-x86_64-2.26.5
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-${AWSCLI_VERSION}.zip" -o "awscli.zip" && \
