@@ -64,6 +64,14 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Post notification in a channel
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_INFRA_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "*New package pushed*: `${{ env.image_name }}`"
+
   run-trigger:
     if: ${{ inputs.path != '' }}
     runs-on: ubuntu-latest
@@ -79,3 +87,11 @@ jobs:
       - uses: yettoapp/images/.github/actions/publish-to-ghcr@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post notification in a channel
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_INFRA_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "*New package pushed*: `${{ env.image_name }}`"
