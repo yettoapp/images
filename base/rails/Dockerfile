@@ -121,6 +121,7 @@ ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
     if [[ -f "/app/package.json" ]]; then \
     # for vite, etc \
     NODE_ENV=development npm install; \
+    NODE_ENV=production npm run build_translations --if-present; \
     fi; \
     RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile; \
     rm -fr /app/tmp;  \
