@@ -55,6 +55,8 @@ RUN \
     apt-get install -yq --no-install-recommends  \
     build-essential \
     libpq-dev \
+    postgresql \
+    postgresql-client \
     cmake \
     gnupg2 \
     curl \
