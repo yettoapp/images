@@ -55,6 +55,7 @@ RUN \
     apt-get install -yq --no-install-recommends  \
     build-essential \
     libpq-dev \
+    libyaml-dev \
     cmake \
     gnupg2 \
     curl \
