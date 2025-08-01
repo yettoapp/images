@@ -3,7 +3,7 @@
 ARG REGISTRY
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.3.6
+ARG RUBY_VERSION=3.4.5
 
 # Debian image to use for base images
 ARG DEBIAN_VERSION="bookworm"
