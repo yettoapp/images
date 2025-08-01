@@ -3,7 +3,7 @@
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=3.4.5
 # Node version to use in base image
-ARG NODE_VERSION=24.5.0
+ARG NODE_VERSION=24.4.1
 
 # Debian image to use for base images
 ARG DEBIAN_VERSION="bookworm"
