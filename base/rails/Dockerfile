@@ -29,6 +29,10 @@ ONBUILD ENV NODE_ENV=${APP_ENV:-development}
 ONBUILD ARG WITH_ASSETS
 ONBUILD ENV WITH_ASSETS=${WITH_ASSETS:-}
 
+# if true, uses Lingui for translations
+ONBUILD ARG WITH_LINGUI
+ONBUILD ENV WITH_LINGUI=${WITH_LINGUI:-}
+
 ONBUILD ARG S3_BUCKET_NAME
 ONBUILD ENV S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
 
@@ -80,10 +84,14 @@ COPY --from=node /usr/local/lib /usr/local/lib
 
 ONBUILD COPY package*.json /app/
 
-COPY --from=awscli /usr/local/aws-cli/v2/current /usr/local
+# for vite etc
+ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
+    set -ex; \
+    NODE_ENV=development npm install; \
+    fi'
 
 # Copy the files needed for installing gems
-ONBUILD COPY Gemfile Gemfile.lock /app/
+ONBUILD COPY Gemfile* /app/
 
 # Pass ruby version
 ONBUILD RUN echo $RUBY_VERSION > /app/.ruby-version
@@ -101,28 +109,20 @@ ONBUILD RUN \
     bundle config set silence_root_warning "true"; \
     # Download and install required Gems
     bundle install -j"$(nproc)"; \
-    # Precompile gems with Bootsnap (and ignore errors)
-    bundle exec bootsnap precompile --gemfile || true && \
     # Remove unneeded gems
     bundle clean --force;
 
 # Copy the whole application folder into the image
 ONBUILD COPY . /app
 
-# Precompile application code with Bootsnap (and ignore errors)
-ONBUILD RUN bundle exec bootsnap precompile app/ lib/ || true
-
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
     set -ex; \
-    if [[ -f "/app/package.json" ]]; then \
-    # for vite, etc \
-    NODE_ENV=development npm install; \
-    NODE_ENV=production npm run build_translations --if-present; \
-    fi; \
     RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile; \
     rm -fr /app/tmp;  \
     fi'
+
+COPY --from=awscli /usr/local/aws-cli/v2/current /usr/local
 
 # Upload assets to S3
 ONBUILD RUN \
@@ -136,4 +136,12 @@ ONBUILD RUN \
     aws configure set aws_secret_access_key "reset"; \
     fi'
 
+ONBUILD RUN bash -c 'if [[ "$WITH_LINGUI" != "" ]]; then \
+    set -ex; \
+    NODE_ENV=production npm run build_translations --if-present; \
+    fi'
+
 ONBUILD RUN rm -rf node_modules vendor/bundle test
+
+# Precompile application code with Bootsnap (and ignore errors)
+ONBUILD RUN bundle exec bootsnap precompile --gemfile app/ lib/ || true
