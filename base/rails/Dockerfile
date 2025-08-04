@@ -1,5 +1,7 @@
 # syntax = docker/dockerfile:1.11
 
+ARG REGISTRY
+
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=3.4.5
 # Node version to use in base image
@@ -10,6 +12,8 @@ ARG DEBIAN_VERSION="bookworm"
 
 # Node image to use for base images
 FROM docker.io/node:${NODE_VERSION}-${DEBIAN_VERSION}-slim AS node
+
+FROM ${REGISTRY}yettoapp/bin-awscli:main AS awscli
 
 # Ruby image to use for base image
 FROM docker.io/ruby:${RUBY_VERSION}-slim-${DEBIAN_VERSION} AS ruby
@@ -64,16 +68,6 @@ RUN \
     git \
     ;
 
-# version of AWS CLI to use for asset uploads
-ARG AWSCLI_VERSION=linux-x86_64-2.26.5
-
-# Install AWS CLI
-RUN curl "https://awscli.amazonaws.com/awscli-exe-${AWSCLI_VERSION}.zip" -o "awscli.zip" && \
-    unzip awscli.zip && \
-    ./aws/install; \
-    rm awscli.zip \
-    ;
-
 FROM ruby AS builder
 
 ARG WITH_ASSETS
@@ -85,6 +79,8 @@ COPY --from=node /usr/local/bin /usr/local/bin
 COPY --from=node /usr/local/lib /usr/local/lib
 
 ONBUILD COPY package*.json /app/
+
+COPY --from=awscli /usr/local/aws-cli/v2/current /usr/local
 
 # Copy the files needed for installing gems
 ONBUILD COPY Gemfile Gemfile.lock /app/
