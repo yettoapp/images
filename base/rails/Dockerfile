@@ -118,7 +118,7 @@ ONBUILD COPY . /app
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
     set -ex; \
-    RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY /app/bin/rails assets:precompile; \
+    RAILS_ENV=production PRECOMPILING=1 SECRET_KEY_BASE=DUMMY VITE_RUBY_SKIP_ASSETS_PRECOMPILE_INSTALL=true /app/bin/rails assets:precompile; \
     rm -fr /app/tmp;  \
     fi'
 
