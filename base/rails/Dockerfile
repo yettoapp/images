@@ -115,6 +115,11 @@ ONBUILD RUN \
 # Copy the whole application folder into the image
 ONBUILD COPY . /app
 
+ONBUILD RUN bash -c 'if [[ "$WITH_LINGUI" != "" ]]; then \
+    set -ex; \
+    NODE_ENV=production npm run build_translations --if-present; \
+    fi'
+
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 ONBUILD RUN bash -c 'if [[ "$WITH_ASSETS" != "" ]]; then \
     set -ex; \
@@ -134,11 +139,6 @@ ONBUILD RUN \
     aws s3 sync /app/public/ s3://$S3_BUCKET_NAME; \
     aws configure set aws_access_key_id "reset"; \
     aws configure set aws_secret_access_key "reset"; \
-    fi'
-
-ONBUILD RUN bash -c 'if [[ "$WITH_LINGUI" != "" ]]; then \
-    set -ex; \
-    NODE_ENV=production npm run build_translations --if-present; \
     fi'
 
 ONBUILD RUN rm -rf node_modules vendor/bundle test
